@@ -81,7 +81,12 @@ class Server(object):
 
         # TODO: YOUR CODE HERE
 
-        pass
+        return [
+            "You are in the room with the white wallpaper.",
+            "You are in the room with the green wallpaper.",
+            "You are in the room with the brown wallpaper.",
+            "You are in the room with the mauve wallpaper.",
+        ][room_number]
 
     def greet(self):
         """
@@ -110,7 +115,12 @@ class Server(object):
 
         # TODO: YOUR CODE HERE
 
-        pass
+        received = b''
+
+        while b'\n' not in received:
+            received += self.client_connection.recv(16)
+
+        self.input_buffer = received.decode().strip()
 
     def move(self, argument):
         """
@@ -135,7 +145,18 @@ class Server(object):
 
         # TODO: YOUR CODE HERE
 
-        pass
+        options = {(0, 'north'): 3,
+                   (0, 'west'): 1,
+                   (0, 'east'): 2,
+                   (1, 'east'): 0,
+                   (2, 'west'): 0,
+                   (3, 'south'): 0}
+
+        try:
+            self.room = options[(self.room, argument)]
+        except KeyError:
+            print('you can not move that way.')
+        self.output_buffer = self.room_description(self.room)
 
     def say(self, argument):
         """
@@ -153,7 +174,7 @@ class Server(object):
 
         # TODO: YOUR CODE HERE
 
-        pass
+        self.output_buffer = f'You say, "{argument}"'
 
     def quit(self, argument):
         """
@@ -169,7 +190,9 @@ class Server(object):
 
         # TODO: YOUR CODE HERE
 
-        pass
+        self.done = True
+        self.output_buffer = "Goodbye!"
+
 
     def route(self):
         """
@@ -183,9 +206,14 @@ class Server(object):
         :return: None
         """
 
-        # TODO: YOUR CODE HERE
+        if self.input_buffer == "quit":
+            self.quit(None)
 
-        pass
+        if self.input_buffer[:4] == "move":
+            self.move(self.input_buffer[5:])
+
+        if self.input_buffer[:3] == "say":
+            self.say(self.input_buffer[4:])     
 
     def push_output(self):
         """
@@ -199,7 +227,8 @@ class Server(object):
 
         # TODO: YOUR CODE HERE
 
-        pass
+        self.client_connection.sendall(b"OK! " + self.output_buffer.encode() + b"\n")
+
 
     def serve(self):
         self.connect()
